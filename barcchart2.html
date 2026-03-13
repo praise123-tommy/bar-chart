@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Data Matrix v3.0</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        :root {
+            --neon-cyan: #00f2ff;
+            --neon-purple: #bc13fe;
+            --dark-bg: #050508;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #0d0d1a 0%, var(--dark-bg) 100%);
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Animated Grid Lines */
+        .grid-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(to right, rgba(0, 242, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 242, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+            animation: moveGrid 15s linear infinite;
+        }
+
+        @keyframes moveGrid {
+            from { transform: translateY(0); }
+            to { transform: translateY(40px); }
+        }
+
+        /* Glassmorphism Effect */
+        .glass-card {
+            background: rgba(20, 20, 35, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+            transition: all 0.4s ease;
+        }
+
+        .glass-card:hover {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 25px rgba(0, 242, 255, 0.3);
+        }
+
+        /* Neon Buttons */
+        .btn-cyber {
+            background: transparent;
+            border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-cyber:hover {
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 30px var(--neon-cyan);
+        }
+
+        .btn-pdf {
+            border-color: var(--neon-purple);
+            color: var(--neon-purple);
+        }
+
+        .btn-pdf:hover {
+            background: var(--neon-purple);
+            color: #fff;
+            box-shadow: 0 0 30px var(--neon-purple);
+        }
+
+        .form-control {
+            background: rgba(0, 0, 0, 0.5) !important;
+            border: 1px solid rgba(0, 242, 255, 0.3) !important;
+            color: white !important;
+        }
+
+        .form-control:focus {
+            box-shadow: 0 0 15px var(--neon-cyan) !important;
+            border-color: var(--neon-cyan) !important;
+        }
+
+        .glitch-text {
+            text-shadow: 2px 2px 10px var(--neon-cyan);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            50% { opacity: 0.7; transform: scale(0.98); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-bg"></div>
+
+    <div class="container py-5">
+        <header class="text-center mb-5">
+            <h1 class="text-5xl md:text-7xl font-black glitch-text tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
+                DATA VISUALIZER Pro
+            </h1>
+            <p class="text-cyan-400 mt-3 tracking-[0.5em] text-[10px] uppercase">Persistent Storage & PDF Engine Active</p>
+        </header>
+
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="glass-card p-4 mb-4">
+                    <h3 class="text-cyan-400 text-sm mb-4 font-mono font-bold tracking-widest">>> SYSTEM_INPUT</h3>
+                    <form id="dataForm">
+                        <div class="mb-3">
+                            <label class="text-[10px] text-gray-400 uppercase">Category Name</label>
+                            <input type="text" id="labelInput" class="form-control" placeholder="e.g. Phase 1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-[10px] text-gray-400 uppercase">Magnitude Value</label>
+                            <input type="number" id="valueInput" class="form-control" placeholder="0" required>
+                        </div>
+                        <button type="submit" class="btn btn-cyber w-full py-3 mb-2">Inject Data</button>
+                    </form>
+                </div>
+
+                <div class="glass-card p-4">
+                    <h3 class="text-purple-400 text-sm mb-4 font-mono font-bold tracking-widest">>> TOOLS</h3>
+                    <button id="downloadPdf" class="btn btn-cyber btn-pdf w-full py-2 mb-3 text-xs">Export to PDF</button>
+                    <button id="clearData" class="w-full text-[10px] text-red-500 hover:text-red-300 transition-all uppercase tracking-widest">
+                        [ Delete All History ]
+                    </button>
+                </div>
+            </div>
+
+            <div id="chartContainer" class="col-lg-8">
+                <div class="glass-card p-4 h-full min-h-[400px]">
+                    <h3 class="text-cyan-400 text-sm mb-4 font-mono font-bold tracking-widest">>> VISUAL_MATRIX</h3>
+                    <div style="height: 350px;">
+                        <canvas id="neonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="beepSound" src="https://www.soundjay.com/buttons/sounds/button-20.mp3"></audio>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        const ctx = document.getElementById('neonChart').getContext('2d');
+        const beep = document.getElementById('beepSound');
+
+        // --- LOCAL STORAGE LOGIC ---
+        const getStorage = () => {
+            const data = localStorage.getItem('user_chart_data');
+            return data ? JSON.parse(data) : { labels: [], vals: [] };
+        };
+
+        const setStorage = (labels, vals) => {
+            localStorage.setItem('user_chart_data', JSON.stringify({ labels, vals }));
+        };
+
+        let currentData = getStorage();
+
+        // --- CHART CONFIG ---
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(0, 242, 255, 0.8)');
+        gradient.addColorStop(1, 'rgba(188, 19, 254, 0.2)');
+
+        let chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: currentData.labels,
+                datasets: [{
+                    label: 'Magnitude',
+                    data: currentData.vals,
+                    backgroundColor: gradient,
+                    borderColor: '#00f2ff',
+                    borderWidth: 2,
+                    borderRadius: 10,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#00f2ff' }
+                    },
+                    x: { ticks: { color: '#aaa' } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // --- ACTIONS ---
+
+        // Add Data
+        document.getElementById('dataForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            beep.play(); // Play sound effect
+
+            const label = document.getElementById('labelInput').value;
+            const val = document.getElementById('valueInput').value;
+
+            chart.data.labels.push(label);
+            chart.data.datasets[0].data.push(val);
+            chart.update();
+
+            setStorage(chart.data.labels, chart.data.datasets[0].data);
+            e.target.reset();
+        });
+
+        // PDF Export
+        document.getElementById('downloadPdf').addEventListener('click', () => {
+            const container = document.getElementById('chartContainer');
+            html2canvas(container, { backgroundColor: '#050508' }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('l', 'mm', 'a4');
+                pdf.text("Data Matrix Report", 10, 10);
+                pdf.addImage(imgData, 'PNG', 10, 20, 280, 150);
+                pdf.save("Data_Report.pdf");
+            });
+        });
+
+        // Clear All
+        document.getElementById('clearData').addEventListener('click', () => {
+            if(confirm("Wipe all system data?")) {
+                localStorage.removeItem('user_chart_data');
+                chart.data.labels = [];
+                chart.data.datasets[0].data = [];
+                chart.update();
+            }
+        });
+    </script>
+</body>
+</html>
